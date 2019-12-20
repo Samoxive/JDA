@@ -44,6 +44,7 @@ import net.dv8tion.jda.api.utils.cache.SortedSnowflakeCacheView;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
 import net.dv8tion.jda.internal.JDAImpl;
+import net.dv8tion.jda.internal.UselessMemberCacheView;
 import net.dv8tion.jda.internal.managers.AudioManagerImpl;
 import net.dv8tion.jda.internal.managers.GuildManagerImpl;
 import net.dv8tion.jda.internal.requests.*;
@@ -81,7 +82,7 @@ public class GuildImpl implements Guild
     private final SortedSnowflakeCacheViewImpl<TextChannel> textChannelCache = new SortedSnowflakeCacheViewImpl<>(TextChannel.class, GuildChannel::getName, Comparator.naturalOrder());
     private final SortedSnowflakeCacheViewImpl<Role> roleCache = new SortedSnowflakeCacheViewImpl<>(Role.class, Role::getName, Comparator.reverseOrder());
     private final SnowflakeCacheViewImpl<Emote> emoteCache = new SnowflakeCacheViewImpl<>(Emote.class, Emote::getName);
-    private final MemberCacheViewImpl memberCache = new MemberCacheViewImpl();
+    private final MemberCacheViewImpl memberCache;
 
     // user -> channel -> override
     private final TLongObjectMap<TLongObjectMap<DataObject>> overrideMap = MiscUtil.newLongMap();
@@ -117,6 +118,7 @@ public class GuildImpl implements Guild
     {
         this.id = id;
         this.api = new UpstreamReference<>(api);
+        this.memberCache = new UselessMemberCacheView(api.getSelfUser().getIdLong());
     }
 
     @Nonnull
@@ -346,10 +348,7 @@ public class GuildImpl implements Guild
     @Override
     public Member getSelfMember()
     {
-        Member member = getMember(getJDA().getSelfUser());
-        if (member == null)
-            throw new IllegalStateException("Guild does not have a self member");
-        return member;
+        return getMember(getJDA().getSelfUser());
     }
 
     @Override

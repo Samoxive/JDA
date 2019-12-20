@@ -84,7 +84,7 @@ public class JDAImpl implements JDA
     protected final Object audioLifeCycleLock = new Object();
     protected ScheduledThreadPoolExecutor audioLifeCyclePool;
 
-    protected final SnowflakeCacheViewImpl<User> userCache = new SnowflakeCacheViewImpl<>(User.class, User::getName);
+    protected SnowflakeCacheViewImpl<User> userCache;
     protected final SnowflakeCacheViewImpl<Guild> guildCache = new SnowflakeCacheViewImpl<>(Guild.class, Guild::getName);
     protected final SnowflakeCacheViewImpl<Category> categories = new SnowflakeCacheViewImpl<>(Category.class, GuildChannel::getName);
     protected final SnowflakeCacheViewImpl<StoreChannel> storeChannelCache = new SnowflakeCacheViewImpl<>(StoreChannel.class, GuildChannel::getName);
@@ -92,7 +92,7 @@ public class JDAImpl implements JDA
     protected final SnowflakeCacheViewImpl<VoiceChannel> voiceChannelCache = new SnowflakeCacheViewImpl<>(VoiceChannel.class, GuildChannel::getName);
     protected final SnowflakeCacheViewImpl<PrivateChannel> privateChannelCache = new SnowflakeCacheViewImpl<>(PrivateChannel.class, MessageChannel::getName);
 
-    protected final TLongObjectMap<User> fakeUsers = MiscUtil.newLongMap();
+    protected TLongObjectMap<User> fakeUsers;
     protected final TLongObjectMap<PrivateChannel> fakePrivateChannels = MiscUtil.newLongMap();
 
     protected final AbstractCacheView<AudioManager> audioManagers = new CacheView.SimpleCacheView<>(AudioManager.class, m -> m.getGuild().getName());
@@ -145,6 +145,15 @@ public class JDAImpl implements JDA
         this.guildSetupController = new GuildSetupController(this);
         this.audioController = new DirectAudioControllerImpl(this);
         this.eventCache = new EventCache(isGuildSubscriptions());
+        fakeUsers = new UselessMap<>(1L);
+        userCache = new SnowflakeCacheViewImpl<User>(User.class, User::getName) {
+            private TLongObjectMap map = new UselessMap(1L);
+            @Override
+            public TLongObjectMap getMap()
+            {
+                return map;
+            }
+        };
     }
 
     public void handleEvent(@Nonnull GenericEvent event)
@@ -962,6 +971,15 @@ public class JDAImpl implements JDA
     public void setSelfUser(SelfUser selfUser)
     {
         this.selfUser = selfUser;
+        fakeUsers = new UselessMap<>(selfUser.getIdLong());
+        userCache = new SnowflakeCacheViewImpl<User>(User.class, User::getName) {
+            private TLongObjectMap map = new UselessMap(selfUser.getIdLong());
+            @Override
+            public TLongObjectMap getMap()
+            {
+                return map;
+            }
+        };
     }
 
     public void setResponseTotal(int responseTotal)
