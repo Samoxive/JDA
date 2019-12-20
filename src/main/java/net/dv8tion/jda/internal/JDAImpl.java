@@ -146,14 +146,7 @@ public class JDAImpl implements JDA
         this.audioController = new DirectAudioControllerImpl(this);
         this.eventCache = new EventCache(isGuildSubscriptions());
         fakeUsers = new UselessMap<>(1L);
-        userCache = new SnowflakeCacheViewImpl<User>(User.class, User::getName) {
-            private TLongObjectMap map = new UselessMap(1L);
-            @Override
-            public TLongObjectMap getMap()
-            {
-                return map;
-            }
-        };
+        userCache = new UselessSnowflakeCacheViewImpl<>(User.class, User::getName, 1L);
     }
 
     public void handleEvent(@Nonnull GenericEvent event)
@@ -972,14 +965,7 @@ public class JDAImpl implements JDA
     {
         this.selfUser = selfUser;
         fakeUsers = new UselessMap<>(selfUser.getIdLong());
-        userCache = new SnowflakeCacheViewImpl<User>(User.class, User::getName) {
-            private TLongObjectMap map = new UselessMap(selfUser.getIdLong());
-            @Override
-            public TLongObjectMap getMap()
-            {
-                return map;
-            }
-        };
+        userCache = new UselessSnowflakeCacheViewImpl<>(User.class, User::getName, selfUser.getIdLong());
     }
 
     public void setResponseTotal(int responseTotal)
