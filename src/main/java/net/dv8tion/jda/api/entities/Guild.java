@@ -284,6 +284,14 @@ public interface Guild extends ISnowflake
         return splashId == null ? null : String.format(SPLASH_URL, getId(), splashId);
     }
 
+    @Nonnull
+    @CheckReturnValue
+    RestAction<List<TextChannel>> retrieveTextChannels();
+
+    @Nonnull
+    @CheckReturnValue
+    RestAction<TextChannel> retrieveTextChannelById(long id);
+
     /**
      * Gets the vanity url for this Guild. The vanity url is the custom invite code of partnered / official Guilds.
      * The returned String will be the code that can be provided to {@code discord.gg/{code}} to get the invite link.

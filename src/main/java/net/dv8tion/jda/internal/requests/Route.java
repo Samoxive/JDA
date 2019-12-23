@@ -173,6 +173,7 @@ public class Route
 
     public static class Channels
     {
+        public static final Route GET_CHANNEL =          new Route(GET,    true, "channels/{channel_id}",          "channel_id");
         public static final Route DELETE_CHANNEL =       new Route(DELETE, true, "channels/{channel_id}",          "channel_id");
         public static final Route MODIFY_CHANNEL =       new Route(PATCH,  true, "channels/{channel_id}",          "channel_id");
         public static final Route GET_WEBHOOKS =         new Route(GET,    true, "channels/{channel_id}/webhooks", "channel_id");

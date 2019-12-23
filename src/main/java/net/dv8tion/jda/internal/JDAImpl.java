@@ -86,11 +86,11 @@ public class JDAImpl implements JDA
 
     protected SnowflakeCacheViewImpl<User> userCache;
     protected final SnowflakeCacheViewImpl<Guild> guildCache = new SnowflakeCacheViewImpl<>(Guild.class, Guild::getName);
-    protected final SnowflakeCacheViewImpl<Category> categories = new SnowflakeCacheViewImpl<>(Category.class, GuildChannel::getName);
-    protected final SnowflakeCacheViewImpl<StoreChannel> storeChannelCache = new SnowflakeCacheViewImpl<>(StoreChannel.class, GuildChannel::getName);
-    protected final SnowflakeCacheViewImpl<TextChannel> textChannelCache = new SnowflakeCacheViewImpl<>(TextChannel.class, GuildChannel::getName);
-    protected final SnowflakeCacheViewImpl<VoiceChannel> voiceChannelCache = new SnowflakeCacheViewImpl<>(VoiceChannel.class, GuildChannel::getName);
-    protected final SnowflakeCacheViewImpl<PrivateChannel> privateChannelCache = new SnowflakeCacheViewImpl<>(PrivateChannel.class, MessageChannel::getName);
+    protected final SnowflakeCacheViewImpl<Category> categories = new UselessSnowflakeCacheView<>(Category.class, GuildChannel::getName);
+    protected final SnowflakeCacheViewImpl<StoreChannel> storeChannelCache = new UselessSnowflakeCacheView<>(StoreChannel.class, GuildChannel::getName);
+    protected final SnowflakeCacheViewImpl<TextChannel> textChannelCache = new UselessSnowflakeCacheView<>(TextChannel.class, GuildChannel::getName);
+    protected final SnowflakeCacheViewImpl<VoiceChannel> voiceChannelCache = new UselessSnowflakeCacheView<>(VoiceChannel.class, GuildChannel::getName);
+    protected final SnowflakeCacheViewImpl<PrivateChannel> privateChannelCache = new UselessSnowflakeCacheView<>(PrivateChannel.class, MessageChannel::getName);
 
     protected TLongObjectMap<User> fakeUsers;
     protected final TLongObjectMap<PrivateChannel> fakePrivateChannels = MiscUtil.newLongMap();
@@ -146,7 +146,7 @@ public class JDAImpl implements JDA
         this.audioController = new DirectAudioControllerImpl(this);
         this.eventCache = new EventCache(isGuildSubscriptions());
         fakeUsers = new UselessMap<>(1L);
-        userCache = new UselessSnowflakeCacheViewImpl<>(User.class, User::getName, 1L);
+        userCache = new UselessUserCacheView<>(User.class, User::getName, 1L);
     }
 
     public void handleEvent(@Nonnull GenericEvent event)
@@ -965,7 +965,7 @@ public class JDAImpl implements JDA
     {
         this.selfUser = selfUser;
         fakeUsers = new UselessMap<>(selfUser.getIdLong());
-        userCache = new UselessSnowflakeCacheViewImpl<>(User.class, User::getName, selfUser.getIdLong());
+        userCache = new UselessUserCacheView<>(User.class, User::getName, selfUser.getIdLong());
     }
 
     public void setResponseTotal(int responseTotal)
