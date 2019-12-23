@@ -43,10 +43,7 @@ import net.dv8tion.jda.api.utils.cache.SnowflakeCacheView;
 import net.dv8tion.jda.api.utils.cache.SortedSnowflakeCacheView;
 import net.dv8tion.jda.api.utils.data.DataArray;
 import net.dv8tion.jda.api.utils.data.DataObject;
-import net.dv8tion.jda.internal.JDAImpl;
-import net.dv8tion.jda.internal.UselessMemberCacheView;
-import net.dv8tion.jda.internal.UselessSnowflakeCacheView;
-import net.dv8tion.jda.internal.UselessSortedSnowflakeCacheView;
+import net.dv8tion.jda.internal.*;
 import net.dv8tion.jda.internal.managers.AudioManagerImpl;
 import net.dv8tion.jda.internal.managers.GuildManagerImpl;
 import net.dv8tion.jda.internal.requests.*;
@@ -79,7 +76,7 @@ public class GuildImpl implements Guild
     private final UpstreamReference<JDAImpl> api;
 
     private final SortedSnowflakeCacheViewImpl<Category> categoryCache = new UselessSortedSnowflakeCacheView<>(Category.class, GuildChannel::getName, Comparator.naturalOrder());
-    private final SortedSnowflakeCacheViewImpl<VoiceChannel> voiceChannelCache = new SortedSnowflakeCacheViewImpl<>(VoiceChannel.class, GuildChannel::getName, Comparator.naturalOrder());
+    private final SortedSnowflakeCacheViewImpl<VoiceChannel> voiceChannelCache = new UselessSortedSnowflakeCacheView<>(VoiceChannel.class, GuildChannel::getName, Comparator.naturalOrder());
     private final SortedSnowflakeCacheViewImpl<StoreChannel> storeChannelCache = new UselessSortedSnowflakeCacheView<>(StoreChannel.class, StoreChannel::getName, Comparator.naturalOrder());
     private final SortedSnowflakeCacheViewImpl<TextChannel> textChannelCache = new SortedSnowflakeCacheViewImpl<>(TextChannel.class, GuildChannel::getName, Comparator.naturalOrder());
     private final SortedSnowflakeCacheViewImpl<Role> roleCache = new SortedSnowflakeCacheViewImpl<>(Role.class, Role::getName, Comparator.reverseOrder());
@@ -87,7 +84,7 @@ public class GuildImpl implements Guild
     private final MemberCacheViewImpl memberCache;
 
     // user -> channel -> override
-    private final TLongObjectMap<TLongObjectMap<DataObject>> overrideMap = MiscUtil.newLongMap();
+    private final TLongObjectMap<TLongObjectMap<DataObject>> overrideMap = new TotallyUselessMap<>();
 
     private final CompletableFuture<Void> chunkingCallback = new CompletableFuture<>();
     private final ReentrantLock mngLock = new ReentrantLock();
@@ -196,6 +193,45 @@ public class GuildImpl implements Guild
     public String getSplashId()
     {
         return splashId;
+    }
+
+    @Nonnull
+    @Override
+    public RestAction<List<TextChannel>> retrieveTextChannels()
+    {
+        Route.CompiledRoute route = Route.Guilds.GET_CHANNELS.compile(getId());
+
+        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+            List<TextChannel> channels = new ArrayList<>();
+            EntityBuilder builder = api.get().getEntityBuilder();
+            DataArray channelArr = response.getArray();
+
+            for (int i = 0; i < channelArr.length(); i++) {
+                DataObject channelObj = channelArr.getObject(i);
+                int type = channelObj.getInt("type", -1);
+                if (type == 0) { // text
+                    TextChannel channel = builder.createTextChannel(this, channelObj, getIdLong());
+                    channels.add(channel);
+                }
+            }
+
+            return channels;
+        });
+    }
+
+    @Nonnull
+    @Override
+    public RestAction<TextChannel> retrieveTextChannelById(long id)
+    {
+        Route.CompiledRoute route = Route.Channels.GET_CHANNEL.compile(String.valueOf(id));
+
+        return new RestActionImpl<>(getJDA(), route, (response, request) -> {
+            if (response.getObject().getInt("type", -1) != 0) {
+                return null;
+            }
+
+            return getJDA().getEntityBuilder().createTextChannel(this, response.getObject(), getIdLong());
+        });
     }
 
     @Nonnull
